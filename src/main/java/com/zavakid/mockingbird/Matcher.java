@@ -64,19 +64,14 @@ public class Matcher {
                 case '*':
                     newState = buildStarState(tail, stack, chars, c);
                     break;
+                case '+':
+                    newState = buildPlusState(tail, stack, chars, c);
             }
             tail = newState;
         }
 
         tail.markAccept();
         return newNfa;
-    }
-
-    private static State buildDotState(State tail, Stack<State> stack, CharBuffer chars, char c) {
-        State newState = State.createState();
-        tail.addTransfer(State.ANY_CHARACTOR, newState);
-        stack.push(tail);
-        return newState;
     }
 
     private static State buildDefaultState(State tail, Stack<State> stack, CharBuffer chars, char c) {
@@ -86,10 +81,33 @@ public class Matcher {
         return newState;
     }
 
+    private static State buildDotState(State tail, Stack<State> stack, CharBuffer chars, char c) {
+        State newState = State.createState();
+        tail.addTransfer(State.ANY_CHARACTOR, newState);
+        stack.push(tail);
+        return newState;
+    }
+
     private static State buildStarState(State tail, Stack<State> stack, CharBuffer chars, char c) {
         State prev = stack.pop();
         tail.addTransfer(State.EPSILON, prev);
-        tail.addTransfer(chars.lookbefore(1), tail);
+        tail.addTransfer(convertMetaIfNeccessary(chars.lookbefore(1)), tail);
+        stack.push(tail);
         return prev;
+    }
+
+    private static State buildPlusState(State tail, Stack<State> stack, CharBuffer chars, char c) {
+        tail.addTransfer(convertMetaIfNeccessary(chars.lookbefore(1)), tail);
+        stack.push(tail);
+        return tail;
+    }
+
+    private static Object convertMetaIfNeccessary(char c) {
+        switch (c) {
+            case '.':
+                return State.ANY_CHARACTOR;
+            default:
+                return c;
+        }
     }
 }

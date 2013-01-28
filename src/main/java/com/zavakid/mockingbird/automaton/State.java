@@ -52,21 +52,21 @@ public class State {
         return new State(true, false);
     }
 
-    public Set<State> getNextAndClosure(Object object) {
+    public Set<State> getNextAndTheirClosure(Object object) {
+        Collection<State> nextState = transfers.get(object);
+        if (nextState.isEmpty()) {
+            return Collections.emptySet();
+        }
         Set<State> closures = new HashSet<State>();
 
-        Collection<State> epsilonState = getClosure();
-        closures.addAll(epsilonState);
-
-        Collection<State> nextState = transfers.get(object);
+        // find their closure
         for (State s : nextState) {
             if (!closures.contains(s)) {
                 closures.add(s);
                 closures.addAll(s.getClosure());
             }
         }
-        closures.addAll(nextState);
-        closures.addAll(epsilonState);
+
         return Collections.unmodifiableSet(closures);
     }
 

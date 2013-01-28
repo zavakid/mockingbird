@@ -43,8 +43,8 @@ public class NFA {
     public void moveStates(char ch) {
         Set<State> nextState = new HashSet<State>();
         for (State state : currentState) {
-            Collection<State> nextAndClosure = state.getNextAndClosure(ch);
-            Collection<State> anyAndClosure = state.getNextAndClosure(State.ANY_CHARACTOR);
+            Collection<State> nextAndClosure = state.getNextAndTheirClosure(ch);
+            Collection<State> anyAndClosure = state.getNextAndTheirClosure(State.ANY_CHARACTOR);
             nextState.addAll(nextAndClosure);
             nextState.addAll(anyAndClosure);
         }
@@ -63,5 +63,6 @@ public class NFA {
     public void reset() {
         currentState.clear();
         currentState.add(initalState);
+        currentState.addAll(initalState.getClosure());
     }
 }

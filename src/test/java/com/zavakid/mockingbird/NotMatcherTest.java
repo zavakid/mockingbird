@@ -29,14 +29,13 @@ import org.junit.runners.Parameterized.Parameters;
  * @since 0.0.1
  */
 @RunWith(Parameterized.class)
-public class MatcherTest {
+public class NotMatcherTest {
 
     @Parameters
     public static List<Object[]> params() {
-        return Arrays.asList(new Object[][] { new Object[] { "abc", new String[] { "abc" } },
-                new Object[] { "a.*", new String[] { "abcde" } }, new Object[] { ".", new String[] { "f" } },
-                new Object[] { ".", new String[] { "f" } }, new Object[] { ".*", new String[] { "sdfajlakjf", "ab" } },
-                new Object[] { "a*", new String[] { "a", "", "aaaaa" } }, new Object[] { "a+", new String[] { "a" } }
+        return Arrays.asList(new Object[][] { new Object[] { "abc", new String[] { "abcd" } },
+                new Object[] { "a.*", new String[] { "babcde" } }, new Object[] { ".", new String[] { "fa" } },
+                new Object[] { "a*", new String[] { "ba", "abaaaa" } }, new Object[] { "aa+", new String[] { "a" } }
 
         });
     }
@@ -44,7 +43,7 @@ public class MatcherTest {
     private String   pattern;
     private String[] testStrs;
 
-    public MatcherTest(String pattern, String[] testStrs){
+    public NotMatcherTest(String pattern, String[] testStrs){
         this.pattern = pattern;
         this.testStrs = testStrs;
     }
@@ -53,8 +52,8 @@ public class MatcherTest {
     public void test() {
         Matcher matcher = new Matcher(pattern);
         for (String testStr : testStrs) {
-            Assert.assertTrue(String.format("pattern [ %s ] not matche string [ %s ]", pattern, testStr),
-                              matcher.match(testStr));
+            Assert.assertFalse(String.format("pattern [ %s ] is matche string [ %s ]", pattern, testStr),
+                               matcher.match(testStr));
         }
     }
 }

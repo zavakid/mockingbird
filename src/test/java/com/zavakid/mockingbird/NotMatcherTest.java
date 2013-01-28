@@ -35,7 +35,8 @@ public class NotMatcherTest {
     public static List<Object[]> params() {
         return Arrays.asList(new Object[][] { new Object[] { "abc", new String[] { "abcd" } },
                 new Object[] { "a.*", new String[] { "babcde" } }, new Object[] { ".", new String[] { "fa" } },
-                new Object[] { "a*", new String[] { "ba", "abaaaa" } }, new Object[] { "aa+", new String[] { "a" } }
+                new Object[] { "a*", new String[] { "ba", "abaaaa" } }, new Object[] { "aa+", new String[] { "a" } },
+                new Object[] { "a?", new String[] { "aa", "ba" } }, new Object[] { "ba?", new String[] { "baa", "" } }
 
         });
     }

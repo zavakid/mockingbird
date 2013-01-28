@@ -36,7 +36,10 @@ public class MatcherTest {
         return Arrays.asList(new Object[][] { new Object[] { "abc", new String[] { "abc" } },
                 new Object[] { "a.*", new String[] { "abcde" } }, new Object[] { ".", new String[] { "f" } },
                 new Object[] { ".", new String[] { "f" } }, new Object[] { ".*", new String[] { "sdfajlakjf", "ab" } },
-                new Object[] { "a*", new String[] { "a", "", "aaaaa" } }, new Object[] { "a+", new String[] { "a" } }
+                new Object[] { "a*", new String[] { "a", "", "aaaaa" } }, new Object[] { "a+", new String[] { "a" } },
+                new Object[] { "a?", new String[] { "", "", "a" } },
+                new Object[] { "b.a?", new String[] { "bx", "bza" } },
+                new Object[] { "b*a?", new String[] { "bbbbbbbbbbbb", "bbbbbbbbbbbba" } },
 
         });
     }

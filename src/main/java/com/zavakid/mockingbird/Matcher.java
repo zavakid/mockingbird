@@ -66,6 +66,8 @@ public class Matcher {
                     break;
                 case '+':
                     newState = buildPlusState(tail, stack, chars, c);
+                case '?':
+                    newState = buildQuestionState(tail, stack, chars, c);
             }
             tail = newState;
         }
@@ -92,12 +94,19 @@ public class Matcher {
         State prev = stack.pop();
         tail.addTransfer(State.EPSILON, prev);
         tail.addTransfer(convertMetaIfNeccessary(chars.lookbefore(1)), tail);
-        stack.push(tail);
+        stack.push(prev);
         return prev;
     }
 
     private static State buildPlusState(State tail, Stack<State> stack, CharBuffer chars, char c) {
         tail.addTransfer(convertMetaIfNeccessary(chars.lookbefore(1)), tail);
+        stack.push(tail);
+        return tail;
+    }
+
+    private static State buildQuestionState(State tail, Stack<State> stack, CharBuffer chars, char c) {
+        State prev = stack.pop();
+        prev.addTransfer(State.EPSILON, tail);
         stack.push(tail);
         return tail;
     }

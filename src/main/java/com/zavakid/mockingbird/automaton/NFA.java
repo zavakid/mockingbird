@@ -19,11 +19,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
-import java.util.Stack;
-
-import com.zavakid.mockingbird.common.CharBuffer;
 
 /**
+ * a common NFA automaton
+ * 
  * @author Zava 2013-1-28 下午10:00:41
  * @since 0.0.1
  */
@@ -32,65 +31,16 @@ public class NFA {
     private State             initalState;
     private Collection<State> currentState = new HashSet<State>();
 
-    private NFA(){
+    public NFA(){
         initalState = State.createInitalState();
         currentState = new LinkedList<State>();
     }
 
-    public static NFA complie(String pattern) {
-        CharBuffer chars = new CharBuffer(pattern);
-        NFA nfa = new NFA();
-        State tail = nfa.initalState;
-        Stack<State> stack = new Stack<State>();
-
-        while (chars.remain()) {
-            State newState;
-            char c = chars.next();
-            switch (c) {
-                default:
-                    newState = buildDefaultState(tail, stack, chars, c);
-                    break;
-                case '.':
-                    newState = buildDotState(tail, stack, chars, c);
-                    break;
-                case '*':
-                    newState = buildStarState(tail, stack, chars, c);
-                    break;
-            }
-            tail = newState;
-        }
-
-        tail.markAccept();
-        return nfa;
+    public State getInitalState() {
+        return initalState;
     }
 
-    /**
-     * thread not safe
-     * 
-     * @param string
-     * @return
-     */
-    public boolean match(String string) {
-        currentState.clear();
-        currentState.add(initalState);
-        for (char ch : string.toCharArray()) {
-            moveStates(ch);
-        }
-
-        return inAcceptStates();
-
-    }
-
-    private boolean inAcceptStates() {
-        for (State state : currentState) {
-            if (state.isAccept()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void moveStates(char ch) {
+    public void moveStates(char ch) {
         Set<State> nextState = new HashSet<State>();
         for (State state : currentState) {
             Collection<State> nextAndClosure = state.getNextAndClosure(ch);
@@ -101,25 +51,17 @@ public class NFA {
         currentState = nextState;
     }
 
-    private static State buildDotState(State tail, Stack<State> stack, CharBuffer chars, char c) {
-        State newState = State.createState();
-        tail.addTransfer(State.ANY_CHARACTOR, newState);
-        stack.push(tail);
-        return newState;
+    public boolean inAcceptState() {
+        for (State state : currentState) {
+            if (state.isAccept()) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private static State buildDefaultState(State tail, Stack<State> stack, CharBuffer chars, char c) {
-        State newState = State.createState();
-        tail.addTransfer(c, newState);
-        stack.push(tail);
-        return newState;
+    public void reset() {
+        currentState.clear();
+        currentState.add(initalState);
     }
-
-    private static State buildStarState(State tail, Stack<State> stack, CharBuffer chars, char c) {
-        State prev = stack.pop();
-        tail.addTransfer(State.EPSILON, prev);
-        tail.addTransfer(chars.lookbefore(1), tail);
-        return prev;
-    }
-
 }

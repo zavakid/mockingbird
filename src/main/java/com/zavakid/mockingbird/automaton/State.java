@@ -94,12 +94,24 @@ public class State {
         return inital;
     }
 
+    public void markInital() {
+        this.inital = true;
+    }
+
+    public void canalInital() {
+        this.inital = false;
+    }
+
     public boolean isAccept() {
         return accept;
     }
 
     public void markAccept() {
         this.accept = true;
+    }
+
+    public void canalAccept() {
+        this.accept = false;
     }
 
 }

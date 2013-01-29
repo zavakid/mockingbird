@@ -49,25 +49,25 @@ public class Matcher {
         NFA newNfa = new NFA();
 
         State tail = newNfa.getInitalState();
-        Stack<State> stack = new Stack<State>();
+        Stack<State> stateStack = new Stack<State>();
 
         while (chars.remain()) {
             State newState;
             char c = chars.next();
             switch (c) {
                 default:
-                    newState = buildDefaultState(tail, stack, chars, c);
+                    newState = buildDefaultState(tail, stateStack, chars, c);
                     break;
                 case '.':
-                    newState = buildDotState(tail, stack, chars, c);
+                    newState = buildDotState(tail, stateStack, chars, c);
                     break;
                 case '*':
-                    newState = buildStarState(tail, stack, chars, c);
+                    newState = buildStarState(tail, stateStack, chars, c);
                     break;
                 case '+':
-                    newState = buildPlusState(tail, stack, chars, c);
+                    newState = buildPlusState(tail, stateStack, chars, c);
                 case '?':
-                    newState = buildQuestionState(tail, stack, chars, c);
+                    newState = buildQuestionState(tail, stateStack, chars, c);
             }
             tail = newState;
         }
@@ -76,38 +76,38 @@ public class Matcher {
         return newNfa;
     }
 
-    private static State buildDefaultState(State tail, Stack<State> stack, CharBuffer chars, char c) {
-        State newState = State.createState();
-        tail.addTransfer(c, newState);
-        stack.push(tail);
-        return newState;
+    private static State buildDefaultState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
+        State newTail = State.createState();
+        tail.addTransfer(c, newTail);
+        stateStack.push(tail);
+        return newTail;
     }
 
-    private static State buildDotState(State tail, Stack<State> stack, CharBuffer chars, char c) {
-        State newState = State.createState();
-        tail.addTransfer(State.ANY_CHARACTOR, newState);
-        stack.push(tail);
-        return newState;
+    private static State buildDotState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
+        State newTail = State.createState();
+        tail.addTransfer(State.ANY_CHARACTOR, newTail);
+        stateStack.push(tail);
+        return newTail;
     }
 
-    private static State buildStarState(State tail, Stack<State> stack, CharBuffer chars, char c) {
-        State prev = stack.pop();
+    private static State buildStarState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
+        State prev = stateStack.pop();
         tail.addTransfer(State.EPSILON, prev);
         tail.addTransfer(convertMetaIfNeccessary(chars.lookbefore(1)), tail);
-        stack.push(prev);
+        stateStack.push(prev);
         return prev;
     }
 
-    private static State buildPlusState(State tail, Stack<State> stack, CharBuffer chars, char c) {
+    private static State buildPlusState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
         tail.addTransfer(convertMetaIfNeccessary(chars.lookbefore(1)), tail);
-        stack.push(tail);
+        stateStack.push(tail);
         return tail;
     }
 
-    private static State buildQuestionState(State tail, Stack<State> stack, CharBuffer chars, char c) {
-        State prev = stack.pop();
+    private static State buildQuestionState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
+        State prev = stateStack.pop();
         prev.addTransfer(State.EPSILON, tail);
-        stack.push(tail);
+        stateStack.push(tail);
         return tail;
     }
 

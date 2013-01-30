@@ -32,14 +32,19 @@ public class State {
     public static Object            EPSILON       = new Object();
     public static Object            ANY_CHARACTOR = new Object();
 
+    private static int              STATE_COUNT   = 0;
+
+    private int                     id;
     private boolean                 inital;
     private boolean                 accept;
     private Multimap<Object, State> transfers     = HashMultimap.create();
 
     private State(){
+        id = STATE_COUNT++;
     }
 
     private State(boolean inital, boolean accept){
+        id = STATE_COUNT++;
         this.inital = inital;
         this.accept = accept;
     }
@@ -50,6 +55,10 @@ public class State {
 
     public static State createInitalState() {
         return new State(true, false);
+    }
+
+    public static State createAcceptState() {
+        return new State(false, true);
     }
 
     public Set<State> getNextAndTheirClosure(Object object) {

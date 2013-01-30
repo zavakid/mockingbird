@@ -48,7 +48,8 @@ public class Matcher {
         CharBuffer chars = new CharBuffer(pattern);
         NFA newNfa = new NFA();
 
-        State tail = newNfa.getInitalState();
+        State tail = State.createInitalState();
+        newNfa.setStartState(tail);
         Stack<State> stateStack = new Stack<State>();
 
         while (chars.remain()) {

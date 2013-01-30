@@ -28,16 +28,11 @@ import java.util.Set;
  */
 public class NFA {
 
-    private State             initalState;
+    private State             startState;
     private Collection<State> currentState = new HashSet<State>();
 
     public NFA(){
-        initalState = State.createInitalState();
         currentState = new LinkedList<State>();
-    }
-
-    public State getInitalState() {
-        return initalState;
     }
 
     public void moveStates(char ch) {
@@ -62,7 +57,16 @@ public class NFA {
 
     public void reset() {
         currentState.clear();
-        currentState.add(initalState);
-        currentState.addAll(initalState.getClosure());
+        currentState.add(startState);
+        currentState.addAll(startState.getClosure());
     }
+
+    public State getStartState() {
+        return startState;
+    }
+
+    public void setStartState(State startState) {
+        this.startState = startState;
+    }
+
 }

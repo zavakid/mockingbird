@@ -24,7 +24,124 @@ public class Fragment {
     private State start;
     private State end;
 
-    public Fragment cat(State newState) {
-        this.end.addTransfer(o, newState);
+    public static Fragment create() {
+        return new Fragment();
     }
+
+    public Fragment(){
+        start = State.createInitalState();
+        end = State.createAcceptState();
+    }
+
+    /**
+     * default cat
+     * 
+     * @param o
+     * @param newState
+     * @return
+     */
+    public Fragment cat(Object o, State newState) {
+        this.end.addTransfer(o, newState);
+        this.end.canalAccept();
+        newState.markAccept();
+        this.end = newState;
+        return this;
+    }
+
+    /**
+     * union by operator : |
+     * 
+     * @param another
+     * @return
+     */
+    public Fragment union(Fragment another) {
+        Fragment newFragment = create();
+        newFragment.start.addTransfer(State.EPSILON, this.start);
+        this.start.canalInital();
+
+        this.end.addTransfer(State.EPSILON, newFragment.end);
+        this.end.canalAccept();
+
+        newFragment.start.addTransfer(State.EPSILON, another.start);
+        another.start.canalInital();
+
+        another.end.addTransfer(State.EPSILON, newFragment.end);
+        another.end.canalAccept();
+
+        return newFragment;
+    }
+
+    /**
+     * question by operator : ?
+     * 
+     * @param another
+     * @return
+     */
+    public Fragment question(Fragment another) {
+        Fragment newFragment = create();
+        newFragment.start.addTransfer(State.EPSILON, another.start);
+        another.start.canalInital();
+
+        another.end.addTransfer(State.EPSILON, newFragment.end);
+        another.end.canalAccept();
+
+        newFragment.start.addTransfer(State.EPSILON, newFragment.end);
+
+        return newFragment;
+    }
+
+    /**
+     * question by operator : *
+     * 
+     * @param another
+     * @return
+     */
+    public Fragment start(Fragment another) {
+        Fragment newFragment = create();
+        newFragment.start.addTransfer(State.EPSILON, another.start);
+        another.start.canalInital();
+
+        another.end.addTransfer(State.EPSILON, newFragment.start);
+        another.end.canalAccept();
+
+        newFragment.start.addTransfer(State.EPSILON, newFragment.end);
+
+        return newFragment;
+    }
+
+    /**
+     * question by operator : +
+     * 
+     * @param another
+     * @return
+     */
+    public Fragment plus(Fragment another) {
+        Fragment newFragment = create();
+        newFragment.start.addTransfer(State.EPSILON, another.start);
+        another.start.canalInital();
+
+        another.end.addTransfer(State.EPSILON, newFragment.end);
+        another.end.addTransfer(State.EPSILON, newFragment.start);
+        another.end.canalAccept();
+
+        return newFragment;
+    }
+
+    // =========== setter & getter ===========
+    public State getStart() {
+        return start;
+    }
+
+    public State getEnd() {
+        return end;
+    }
+
+    public void setStart(State start) {
+        this.start = start;
+    }
+
+    public void setEnd(State end) {
+        this.end = end;
+    }
+
 }

@@ -43,7 +43,7 @@ public class CharBuffer {
     }
 
     public Character lookAhead(int i) {
-        int p = position + i;
+        int p = position + i - 1;
         if (p >= length) {
             return null;
         }

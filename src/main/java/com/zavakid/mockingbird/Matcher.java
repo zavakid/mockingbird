@@ -17,6 +17,7 @@ package com.zavakid.mockingbird;
 
 import java.util.Stack;
 
+import com.zavakid.mockingbird.automaton.Fragment;
 import com.zavakid.mockingbird.automaton.NFA;
 import com.zavakid.mockingbird.automaton.State;
 import com.zavakid.mockingbird.common.CharBuffer;
@@ -34,6 +35,7 @@ public class Matcher {
     public Matcher(String pattern){
         nfa = compile(pattern);
         // may be we can add cache for some hot pattern
+        // but caching need upper layer to do
     }
 
     public boolean match(String string) {
@@ -46,78 +48,119 @@ public class Matcher {
 
     protected NFA compile(String pattern) {
         CharBuffer chars = new CharBuffer(pattern);
-        NFA newNfa = new NFA();
+        Fragment frag = parseFragment(chars);
 
-        State tail = State.createInitalState();
-        newNfa.setStartState(tail);
-        Stack<State> stateStack = new Stack<State>();
+        nfa = new NFA();
+        nfa.setStartState(frag.getStart());
+        return nfa;
+    }
 
+    protected Fragment parseFragment(CharBuffer chars) {
+        Stack<Fragment> fragStack = new Stack<Fragment>();
         while (chars.remain()) {
-            State newState;
             char c = chars.next();
             switch (c) {
                 default:
-                    newState = buildDefaultState(tail, stateStack, chars, c);
+                    buildDeafultFrag(fragStack, chars, c);
                     break;
                 case '.':
-                    newState = buildDotState(tail, stateStack, chars, c);
+                    buildDeafultFrag(fragStack, chars, State.ANY_CHARACTOR);
                     break;
                 case '*':
-                    newState = buildStarState(tail, stateStack, chars, c);
+                    buildStarFrag(fragStack, chars);
                     break;
                 case '+':
-                    newState = buildPlusState(tail, stateStack, chars, c);
+                    buildPlusFrag(fragStack, chars);
+                    break;
                 case '?':
-                    newState = buildQuestionState(tail, stateStack, chars, c);
+                    buildQuestionFrag(fragStack, chars);
+                    break;
+                case '\\':
+                    buildEscapeFrag(fragStack, chars);
+                    break;
+                case '(':
+                    buildLeftBracketFrag(fragStack, chars);
+                    break;
+                case ')':
+                    return join(fragStack);
+                case '|':
+                    Fragment leftFrag = join(fragStack);
+                    fragStack = new Stack<Fragment>();
+                    Fragment rightFrag = parseFragment(chars);
+                    return leftFrag.union(rightFrag);
             }
-            tail = newState;
         }
-
-        tail.markAccept();
-        return newNfa;
+        return join(fragStack);
     }
 
-    private static State buildDefaultState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
-        State newTail = State.createState();
-        tail.addTransfer(c, newTail);
-        stateStack.push(tail);
-        return newTail;
+    private void buildDeafultFrag(Stack<Fragment> fragStack, CharBuffer chars, Object c) {
+        Fragment newFrag = Fragment.create();
+        newFrag.getStart().addTransfer(c, newFrag.getEnd());
+        catAndPush(fragStack, chars, newFrag);
+
     }
 
-    private static State buildDotState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
-        State newTail = State.createState();
-        tail.addTransfer(State.ANY_CHARACTOR, newTail);
-        stateStack.push(tail);
-        return newTail;
-    }
-
-    private static State buildStarState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
-        State prev = stateStack.pop();
-        tail.addTransfer(State.EPSILON, prev);
-        tail.addTransfer(convertMetaIfNeccessary(chars.lookbefore(1)), tail);
-        stateStack.push(prev);
-        return prev;
-    }
-
-    private static State buildPlusState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
-        tail.addTransfer(convertMetaIfNeccessary(chars.lookbefore(1)), tail);
-        stateStack.push(tail);
-        return tail;
-    }
-
-    private static State buildQuestionState(State tail, Stack<State> stateStack, CharBuffer chars, char c) {
-        State prev = stateStack.pop();
-        prev.addTransfer(State.EPSILON, tail);
-        stateStack.push(tail);
-        return tail;
-    }
-
-    private static Object convertMetaIfNeccessary(char c) {
+    private boolean canCat(Character c) {
+        if (c == null) {
+            return true;
+        }
         switch (c) {
-            case '.':
-                return State.ANY_CHARACTOR;
+            case '*':
+            case '+':
+            case '?':
+                return false;
             default:
-                return c;
+                break;
         }
+        return true;
+    }
+
+    private void buildStarFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+        Fragment newFrag = fragStack.pop();
+        newFrag = Fragment.starWrap(newFrag);
+        catAndPush(fragStack, chars, newFrag);
+    }
+
+    private void buildPlusFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+        Fragment newFrag = fragStack.pop();
+        newFrag = Fragment.plusWrap(newFrag);
+        catAndPush(fragStack, chars, newFrag);
+    }
+
+    private void buildQuestionFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+        Fragment newFrag = fragStack.pop();
+        newFrag = Fragment.questionWrap(newFrag);
+        catAndPush(fragStack, chars, newFrag);
+    }
+
+    private void buildEscapeFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+        buildDeafultFrag(fragStack, chars, chars.next());
+    }
+
+    private void buildLeftBracketFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+        Fragment newFrag = parseFragment(chars);
+        catAndPush(fragStack, chars, newFrag);
+    }
+
+    protected void catAndPush(Stack<Fragment> fragStack, CharBuffer chars, Fragment newFrag) {
+        if (fragStack.size() != 0) {
+            if (canCat(chars.lookAhead(1))) {
+                Fragment pre = fragStack.pop();
+                newFrag = pre.cat(newFrag);
+            }
+        }
+        fragStack.push(newFrag);
+    }
+
+    private Fragment join(Stack<Fragment> fragStack) {
+        Fragment start = fragStack.remove(0);
+        if (fragStack.size() == 0) {
+            return start;
+        }
+
+        for (Fragment fragment : fragStack) {
+            start = start.cat(fragment);
+        }
+        return start;
     }
 }

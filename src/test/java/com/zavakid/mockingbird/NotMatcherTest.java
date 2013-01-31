@@ -51,7 +51,7 @@ public class NotMatcherTest {
                 new Object[] { "b*a?", new String[] { "aa", "baa" } },
                 new Object[] { "(xy)*(abc)+", new String[] { "", "xyabcd" } },
 
-                new Object[] { "(xy)*(abc)?", new String[] { "abcabc", "x", "y", "ab", "", "ababc", "xyxabc", "xyx" } },
+                new Object[] { "(xy)*(abc)?", new String[] { "abcabc", "x", "y", "ab", "bc", "ababc", "xyxabc", "xyx" } },
 
         });
     }

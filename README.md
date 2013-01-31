@@ -1,4 +1,5 @@
 # mockingbird
+[![Build Status](https://travis-ci.org/zavakid/mockingbird.png?branch=master)](https://travis-ci.org/zavakid/mockingbird)
 
 a experimental regex implement by automaton of pure Java *in heavy development*
 

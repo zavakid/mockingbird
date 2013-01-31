@@ -48,47 +48,49 @@ public class MatcherWithFrag {
 
     protected NFA compile(String pattern) {
         CharBuffer chars = new CharBuffer(pattern);
-        Stack<Stack<Fragment>> frameStack = new Stack<Stack<Fragment>>();
+        Fragment frag = parseFragment(chars);
+
+        nfa = new NFA();
+        nfa.setStartState(frag.getStart());
+        return nfa;
+    }
+
+    protected Fragment parseFragment(CharBuffer chars) {
         Stack<Fragment> fragStack = new Stack<Fragment>();
-        Stack<Character> operatorStack = new Stack<Character>();
         while (chars.remain()) {
             char c = chars.next();
             switch (c) {
                 default:
-                    buildDeafultFrag(fragStack, operatorStack, chars, c);
+                    buildDeafultFrag(fragStack, chars, c);
                     break;
                 case '.':
-                    buildDeafultFrag(fragStack, operatorStack, chars, State.ANY_CHARACTOR);
+                    buildDeafultFrag(fragStack, chars, State.ANY_CHARACTOR);
                     break;
                 case '*':
-                    buildStarFrag(fragStack, operatorStack, chars);
+                    buildStarFrag(fragStack, chars);
                     break;
                 case '+':
-                    buildPlusFrag(fragStack, operatorStack, chars);
+                    buildPlusFrag(fragStack, chars);
                     break;
                 case '?':
-                    buildQuestionFrag(fragStack, operatorStack, chars);
+                    buildQuestionFrag(fragStack, chars);
                     break;
                 case '(':
-                    // add a new fragStack
-                    frameStack.push(fragStack);
-                    fragStack = new Stack<Fragment>();
+                    buildLeftBracketFrag(fragStack, chars);
                     break;
                 case ')':
-                    Fragment frag = join(fragStack);
-                    fragStack = frameStack.pop();
-                    catAndPush(fragStack, chars, frag);
-                    break;
+                    return join(fragStack);
+                case '|':
+                    Fragment leftFrag = join(fragStack);
+                    fragStack = new Stack<Fragment>();
+                    Fragment rightFrag = parseFragment(chars);
+                    return leftFrag.union(rightFrag);
             }
         }
-
-        assert fragStack.size() == 1;
-        nfa = new NFA();
-        nfa.setStartState(fragStack.get(0).getStart());
-        return nfa;
+        return join(fragStack);
     }
 
-    private void buildDeafultFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars, Object c) {
+    private void buildDeafultFrag(Stack<Fragment> fragStack, CharBuffer chars, Object c) {
         Fragment newFrag = Fragment.create();
         newFrag.getStart().addTransfer(c, newFrag.getEnd());
         catAndPush(fragStack, chars, newFrag);
@@ -110,21 +112,26 @@ public class MatcherWithFrag {
         return true;
     }
 
-    private void buildStarFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars) {
+    private void buildStarFrag(Stack<Fragment> fragStack, CharBuffer chars) {
         Fragment newFrag = fragStack.pop();
         newFrag = Fragment.starWrap(newFrag);
         catAndPush(fragStack, chars, newFrag);
     }
 
-    private void buildPlusFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars) {
+    private void buildPlusFrag(Stack<Fragment> fragStack, CharBuffer chars) {
         Fragment newFrag = fragStack.pop();
         newFrag = Fragment.plusWrap(newFrag);
         catAndPush(fragStack, chars, newFrag);
     }
 
-    private void buildQuestionFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars) {
+    private void buildQuestionFrag(Stack<Fragment> fragStack, CharBuffer chars) {
         Fragment newFrag = fragStack.pop();
         newFrag = Fragment.questionWrap(newFrag);
+        catAndPush(fragStack, chars, newFrag);
+    }
+
+    private void buildLeftBracketFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+        Fragment newFrag = parseFragment(chars);
         catAndPush(fragStack, chars, newFrag);
     }
 

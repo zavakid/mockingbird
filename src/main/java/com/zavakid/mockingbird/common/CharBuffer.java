@@ -50,4 +50,9 @@ public class CharBuffer {
         return s.charAt(position - i);
     }
 
+    @Override
+    public String toString() {
+        return "CharBuffer [position=" + position + ", length=" + length + ", s=" + s + "]";
+    }
+
 }

@@ -34,15 +34,23 @@ public class CharBuffer {
         return position < length;
     }
 
-    public char next() {
+    public boolean remain(int i) {
+        return (position + i) < length;
+    }
+
+    public Character next() {
         return s.charAt(position++);
     }
 
-    public char lookAhead(int i) {
-        return s.charAt(position + i);
+    public Character lookAhead(int i) {
+        int p = position + i;
+        if (p >= length) {
+            return null;
+        }
+        return s.charAt(p);
     }
 
-    public char lookbefore(int i) {
+    public Character lookbefore(int i) {
         return s.charAt(position - i);
     }
 

@@ -75,6 +75,9 @@ public class MatcherWithFrag {
                 case '?':
                     buildQuestionFrag(fragStack, chars);
                     break;
+                case '\\':
+                    buildEscapeFrag(fragStack, chars);
+                    break;
                 case '(':
                     buildLeftBracketFrag(fragStack, chars);
                     break;
@@ -130,6 +133,10 @@ public class MatcherWithFrag {
         catAndPush(fragStack, chars, newFrag);
     }
 
+    private void buildEscapeFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+        buildDeafultFrag(fragStack, chars, chars.next());
+    }
+
     private void buildLeftBracketFrag(Stack<Fragment> fragStack, CharBuffer chars) {
         Fragment newFrag = parseFragment(chars);
         catAndPush(fragStack, chars, newFrag);
@@ -155,14 +162,5 @@ public class MatcherWithFrag {
             start = start.cat(fragment);
         }
         return start;
-    }
-
-    private static Object convertMetaIfNeccessary(char c) {
-        switch (c) {
-            case '.':
-                return State.ANY_CHARACTOR;
-            default:
-                return c;
-        }
     }
 }

@@ -62,6 +62,7 @@ public class MatcherTest {
                 new Object[] { "(x|y)+", new String[] { "x", "yxy", "xxyxyxyxyyyyyxxxxx" } },
                 new Object[] { "((a|b)(x|y))?", new String[] { "", "ax", "bx", "ay", "by" } },
                 new Object[] { "((a|b)?(x|y))?", new String[] { "", "ax", "bx", "ay", "by", "x", "y" } },
+                new Object[] { "a\\|b", new String[] { "a|b" } }, new Object[] { "a\\*", new String[] { "a*" } },
 
         });
     }

@@ -30,11 +30,7 @@ import com.zavakid.mockingbird.common.CharBuffer;
  */
 public class MatcherWithFrag {
 
-    private final static Object STAR_OPERATE          = new Object();
-    private final static Object OR_OPERATE            = new Object();
-    private final static Object LEFT_BRACKET_OPERATE  = new Object();
-    private final static Object RIGHT_BRACKET_OPERATE = new Object();
-    private NFA                 nfa;
+    private NFA nfa;
 
     public MatcherWithFrag(String pattern){
         nfa = compile(pattern);
@@ -52,6 +48,7 @@ public class MatcherWithFrag {
 
     protected NFA compile(String pattern) {
         CharBuffer chars = new CharBuffer(pattern);
+        Stack<Stack<Fragment>> frameStack = new Stack<Stack<Fragment>>();
         Stack<Fragment> fragStack = new Stack<Fragment>();
         Stack<Character> operatorStack = new Stack<Character>();
         while (chars.remain()) {
@@ -72,9 +69,20 @@ public class MatcherWithFrag {
                 case '?':
                     buildQuestionFrag(fragStack, operatorStack, chars);
                     break;
+                case '(':
+                    // add a new fragStack
+                    frameStack.push(fragStack);
+                    fragStack = new Stack<Fragment>();
+                    break;
+                case ')':
+                    Fragment frag = join(fragStack);
+                    fragStack = frameStack.pop();
+                    catAndPush(fragStack, chars, frag);
+                    break;
             }
         }
 
+        assert fragStack.size() == 1;
         nfa = new NFA();
         nfa.setStartState(fragStack.get(0).getStart());
         return nfa;
@@ -83,15 +91,7 @@ public class MatcherWithFrag {
     private void buildDeafultFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars, Object c) {
         Fragment newFrag = Fragment.create();
         newFrag.getStart().addTransfer(c, newFrag.getEnd());
-
-        if (fragStack.size() != 0) {
-            if (canCat(chars.lookAhead(1))) {
-                Fragment pre = fragStack.pop();
-                newFrag = pre.cat(newFrag);
-            }
-        }
-
-        fragStack.push(newFrag);
+        catAndPush(fragStack, chars, newFrag);
 
     }
 
@@ -113,43 +113,41 @@ public class MatcherWithFrag {
     private void buildStarFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars) {
         Fragment newFrag = fragStack.pop();
         newFrag = Fragment.starWrap(newFrag);
-
-        if (fragStack.size() != 0) {
-            if (canCat(chars.lookAhead(1))) {
-                Fragment pre = fragStack.pop();
-                newFrag = pre.cat(newFrag);
-            }
-        }
-        fragStack.push(newFrag);
+        catAndPush(fragStack, chars, newFrag);
     }
 
     private void buildPlusFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars) {
         Fragment newFrag = fragStack.pop();
         newFrag = Fragment.plusWrap(newFrag);
-
-        if (fragStack.size() != 0) {
-            if (canCat(chars.lookAhead(1))) {
-                Fragment pre = fragStack.pop();
-                newFrag = pre.cat(newFrag);
-            }
-        }
-
-        fragStack.push(newFrag);
+        catAndPush(fragStack, chars, newFrag);
     }
 
     private void buildQuestionFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars) {
-
         Fragment newFrag = fragStack.pop();
         newFrag = Fragment.questionWrap(newFrag);
+        catAndPush(fragStack, chars, newFrag);
+    }
 
+    protected void catAndPush(Stack<Fragment> fragStack, CharBuffer chars, Fragment newFrag) {
         if (fragStack.size() != 0) {
             if (canCat(chars.lookAhead(1))) {
                 Fragment pre = fragStack.pop();
                 newFrag = pre.cat(newFrag);
             }
         }
-
         fragStack.push(newFrag);
+    }
+
+    private Fragment join(Stack<Fragment> fragStack) {
+        Fragment start = fragStack.remove(0);
+        if (fragStack.size() == 0) {
+            return start;
+        }
+
+        for (Fragment fragment : fragStack) {
+            start = start.cat(fragment);
+        }
+        return start;
     }
 
     private static Object convertMetaIfNeccessary(char c) {

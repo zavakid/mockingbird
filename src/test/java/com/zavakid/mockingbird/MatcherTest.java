@@ -33,13 +33,24 @@ public class MatcherTest {
 
     @Parameters
     public static List<Object[]> params() {
-        return Arrays.asList(new Object[][] { new Object[] { "abc", new String[] { "abc" } },
-                new Object[] { "a.*", new String[] { "abcde" } }, new Object[] { ".", new String[] { "f" } },
-                new Object[] { ".", new String[] { "f" } }, new Object[] { ".*", new String[] { "sdfajlakjf", "ab" } },
-                new Object[] { "a*", new String[] { "a", "", "aaaaa" } }, new Object[] { "a+", new String[] { "a" } },
-                new Object[] { "a?", new String[] { "", "", "a" } },
+        return Arrays.asList(new Object[][] {
+                new Object[] { "abc", new String[] { "abc" } },
+                new Object[] { "a.*", new String[] { "abcde" } },
+                new Object[] { ".", new String[] { "f" } },
+                new Object[] { ".", new String[] { "f" } },
+                new Object[] { ".*", new String[] { "sdfajlakjf", "ab" } },
+                new Object[] { "a*", new String[] { "a", "", "aaaaa" } },
+                new Object[] { "a+", new String[] { "a" } },
+                new Object[] { "a?", new String[] { "", "a" } },
                 new Object[] { "b.a?", new String[] { "bx", "bza" } },
                 new Object[] { "b*a?", new String[] { "bbbbbbbbbbbb", "bbbbbbbbbbbba" } },
+                new Object[] {
+                        "(xy)*(abc)+",
+                        new String[] { "xyabc", "abc", "abcabc", "xyabc", "xyabcabc", "xyxyxyxyabc", "xyxyxyxyabcabc",
+                                "xyxyxyxyabcabcabc" } },
+
+                new Object[] { "(xy)*(abc)?",
+                        new String[] { "", "xy", "xyxy", "xyxyxy", "", "xyabc", "xyxyabc", "xyxyxyabc" } },
 
         });
     }

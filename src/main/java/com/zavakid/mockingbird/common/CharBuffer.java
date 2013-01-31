@@ -34,10 +34,6 @@ public class CharBuffer {
         return position < length;
     }
 
-    public boolean remain(int i) {
-        return (position + i) < length;
-    }
-
     public Character next() {
         return s.charAt(position++);
     }

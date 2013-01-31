@@ -77,7 +77,7 @@ public class MatcherTest {
 
     @Test
     public void test() {
-        MatcherWithFrag matcher = new MatcherWithFrag(pattern);
+        Matcher matcher = new Matcher(pattern);
         for (String testStr : testStrs) {
             Assert.assertTrue(String.format("pattern [ %s ] not matche string [ %s ]", pattern, testStr),
                               matcher.match(testStr));

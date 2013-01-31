@@ -33,10 +33,25 @@ public class NotMatcherTest {
 
     @Parameters
     public static List<Object[]> params() {
-        return Arrays.asList(new Object[][] { new Object[] { "abc", new String[] { "abcd" } },
-                new Object[] { "a.*", new String[] { "babcde" } }, new Object[] { ".", new String[] { "fa" } },
-                new Object[] { "a*", new String[] { "ba", "abaaaa" } }, new Object[] { "aa+", new String[] { "a" } },
-                new Object[] { "a?", new String[] { "aa", "ba" } }, new Object[] { "ba?", new String[] { "baa", "" } }
+        return Arrays.asList(new Object[][] {
+                new Object[] { "abc", new String[] { "abcd" } },
+                new Object[] { "a.*", new String[] { "babcde" } },
+                new Object[] { ".", new String[] { "fa" } },
+                new Object[] { "a*", new String[] { "ba", "abaaaa" } },
+                new Object[] { "aa+", new String[] { "", "a", "b" } },
+                new Object[] { "a?", new String[] { "aa", "ba" } },
+                new Object[] { "ba?", new String[] { "baa", "" } },
+                new Object[] { "abc", new String[] { " ", "a", "ab", "abcd", "cba", "ba" } },
+                new Object[] { "a.*", new String[] { "", "b", "." } },
+                new Object[] { ".", new String[] { "" } },
+                new Object[] { "a*", new String[] { "b", "ba" } },
+                new Object[] { "a+", new String[] { "", "b" } },
+                new Object[] { "a?", new String[] { "aa", " ", "x" } },
+                new Object[] { "b.a?", new String[] { "b", "bzaa" } },
+                new Object[] { "b*a?", new String[] { "aa", "baa" } },
+                new Object[] { "(xy)*(abc)+", new String[] { "", "xyabcd" } },
+
+                new Object[] { "(xy)*(abc)?", new String[] { "abcabc", "x", "y", "ab", "", "ababc", "xyxabc", "xyx" } },
 
         });
     }

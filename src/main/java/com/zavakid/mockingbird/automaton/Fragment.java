@@ -33,18 +33,19 @@ public class Fragment {
         end = State.createAcceptState();
     }
 
-    /**
-     * default cat
-     * 
-     * @param o
-     * @param newState
-     * @return
-     */
-    public Fragment cat(Object o, State newState) {
+    public Fragment addState(Object o, State newState) {
         this.end.addTransfer(o, newState);
         this.end.canalAccept();
         newState.markAccept();
         this.end = newState;
+        return this;
+    }
+
+    public Fragment cat(Fragment another) {
+        this.end.addTransfer(State.EPSILON, another.start);
+        this.end.canalAccept();
+        this.end = another.end;
+        another.start.canalInital();
         return this;
     }
 
@@ -77,7 +78,7 @@ public class Fragment {
      * @param another
      * @return
      */
-    public Fragment question(Fragment another) {
+    public static Fragment questionWrap(Fragment another) {
         Fragment newFragment = create();
         newFragment.start.addTransfer(State.EPSILON, another.start);
         another.start.canalInital();
@@ -96,7 +97,7 @@ public class Fragment {
      * @param another
      * @return
      */
-    public Fragment start(Fragment another) {
+    public static Fragment starWrap(Fragment another) {
         Fragment newFragment = create();
         newFragment.start.addTransfer(State.EPSILON, another.start);
         another.start.canalInital();
@@ -115,7 +116,7 @@ public class Fragment {
      * @param another
      * @return
      */
-    public Fragment plus(Fragment another) {
+    public static Fragment plusWrap(Fragment another) {
         Fragment newFragment = create();
         newFragment.start.addTransfer(State.EPSILON, another.start);
         another.start.canalInital();

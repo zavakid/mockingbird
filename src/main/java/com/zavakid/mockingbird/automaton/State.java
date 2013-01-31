@@ -29,8 +29,21 @@ import com.google.common.collect.Multimap;
  */
 public class State {
 
-    public static Object            EPSILON       = new Object();
-    public static Object            ANY_CHARACTOR = new Object();
+    public static Object            EPSILON       = new Object() {
+
+                                                      @Override
+                                                      public String toString() {
+                                                          return "epsilon";
+                                                      }
+                                                  };
+
+    public static Object            ANY_CHARACTOR = new Object() {
+
+                                                      @Override
+                                                      public String toString() {
+                                                          return ".";
+                                                      }
+                                                  };
 
     private static int              STATE_COUNT   = 0;
 
@@ -123,4 +136,19 @@ public class State {
         this.accept = false;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("State [id=" + id + ", inital=" + inital + ", accept=" + accept
+                                             + " Transfer : ");
+        for (Object key : transfers.keySet()) {
+            sb.append(System.getProperty("line.separator"));// TODO 需要封装此方式
+            sb.append(key).append(" -> ");
+            for (State state : transfers.get(key)) {
+                sb.append(state.id).append(" , ");
+            }
+            sb.append(System.getProperty("line.separator"));// TODO 需要封装此方式
+        }
+        sb.append(" ]");
+        return sb.toString();
+    }
 }

@@ -30,11 +30,16 @@ import com.zavakid.mockingbird.common.CharBuffer;
  */
 public class MatcherWithFrag {
 
-    private NFA nfa;
+    private final static Object STAR_OPERATE          = new Object();
+    private final static Object OR_OPERATE            = new Object();
+    private final static Object LEFT_BRACKET_OPERATE  = new Object();
+    private final static Object RIGHT_BRACKET_OPERATE = new Object();
+    private NFA                 nfa;
 
     public MatcherWithFrag(String pattern){
         nfa = compile(pattern);
         // may be we can add cache for some hot pattern
+        // but caching need upper layer to do
     }
 
     public boolean match(String string) {
@@ -49,84 +54,102 @@ public class MatcherWithFrag {
         CharBuffer chars = new CharBuffer(pattern);
         Stack<Fragment> fragStack = new Stack<Fragment>();
         Stack<Character> operatorStack = new Stack<Character>();
-        Fragment currentFrag = null;
         while (chars.remain()) {
             char c = chars.next();
             switch (c) {
                 default:
-                    currentFrag = buildDeafultFrag(currentFrag, fragStack, operatorStack, c);
+                    buildDeafultFrag(fragStack, operatorStack, chars, c);
                     break;
                 case '.':
-                    currentFrag = buildDotFrag(currentFrag, fragStack, operatorStack, c);
+                    buildDeafultFrag(fragStack, operatorStack, chars, State.ANY_CHARACTOR);
                     break;
                 case '*':
-                    currentFrag = buildStartFrag(currentFrag, fragStack, operatorStack, c);
+                    buildStarFrag(fragStack, operatorStack, chars);
                     break;
                 case '+':
-                    currentFrag = buildPlusFrag(currentFrag, fragStack, operatorStack, c);
+                    buildPlusFrag(fragStack, operatorStack, chars);
                     break;
                 case '?':
-                    currentFrag = buildQuestionFrag(currentFrag, fragStack, operatorStack, c);
+                    buildQuestionFrag(fragStack, operatorStack, chars);
                     break;
             }
         }
 
-        if (currentFrag == null) {
-            throw new IllegalArgumentException("the pattern : " + pattern + " complied failed");
-        }
-
         nfa = new NFA();
-        nfa.setStartState(currentFrag.getStart());
+        nfa.setStartState(fragStack.get(0).getStart());
         return nfa;
     }
 
-    private Fragment buildDeafultFrag(Fragment currentFrag, Stack<Fragment> fragStack, Stack<Character> operatorStack,
-                                      char c) {
-        if (currentFrag == null) {
-            currentFrag = Fragment.create();
-            currentFrag.getStart().addTransfer(c, currentFrag.getEnd());
-            return currentFrag;
+    private void buildDeafultFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars, Object c) {
+        Fragment newFrag = Fragment.create();
+        newFrag.getStart().addTransfer(c, newFrag.getEnd());
+
+        if (fragStack.size() != 0) {
+            if (canCat(chars.lookAhead(1))) {
+                Fragment pre = fragStack.pop();
+                newFrag = pre.cat(newFrag);
+            }
         }
-        currentFrag.cat(c, State.createState());
-        return currentFrag;
+
+        fragStack.push(newFrag);
+
     }
 
-    private Fragment buildDotFrag(Fragment currentFrag, Stack<Fragment> fragStack, Stack<Character> operatorStack,
-                                  char c) {
-        if (currentFrag == null) {
-            currentFrag = Fragment.create();
-            currentFrag.getStart().addTransfer(State.ANY_CHARACTOR, currentFrag.getEnd());
-            return currentFrag;
+    private boolean canCat(Character c) {
+        if (c == null) {
+            return true;
         }
-        currentFrag.cat(State.ANY_CHARACTOR, State.createState());
-        return currentFrag;
+        switch (c) {
+            case '*':
+            case '+':
+            case '?':
+                return false;
+            default:
+                break;
+        }
+        return true;
     }
 
-    private Fragment buildStartFrag(Fragment currentFrag, Stack<Fragment> fragStack, Stack<Character> operatorStack,
-                                    char c) {
-        if (currentFrag == null) {
-            throw new IllegalArgumentException(" * must have a frag before it ");
+    private void buildStarFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars) {
+        Fragment newFrag = fragStack.pop();
+        newFrag = Fragment.starWrap(newFrag);
+
+        if (fragStack.size() != 0) {
+            if (canCat(chars.lookAhead(1))) {
+                Fragment pre = fragStack.pop();
+                newFrag = pre.cat(newFrag);
+            }
         }
-        Fragment newFragment = currentFrag.start(currentFrag);
-        return newFragment;
+        fragStack.push(newFrag);
     }
 
-    private Fragment buildPlusFrag(Fragment currentFrag, Stack<Fragment> fragStack, Stack<Character> operatorStack,
-                                   char c) {
-        if (currentFrag == null) {
-            throw new IllegalArgumentException(" + must have a frag before it ");
+    private void buildPlusFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars) {
+        Fragment newFrag = fragStack.pop();
+        newFrag = Fragment.plusWrap(newFrag);
+
+        if (fragStack.size() != 0) {
+            if (canCat(chars.lookAhead(1))) {
+                Fragment pre = fragStack.pop();
+                newFrag = pre.cat(newFrag);
+            }
         }
-        Fragment newFragment = currentFrag.plus(currentFrag);
-        return newFragment;
+
+        fragStack.push(newFrag);
     }
 
-    private Fragment buildQuestionFrag(Fragment currentFrag, Stack<Fragment> fragStack, Stack<Character> operatorStack,
-                                       char c) {
-        if (currentFrag == null) {
-            throw new IllegalArgumentException(" ? must have a frag before it ");
+    private void buildQuestionFrag(Stack<Fragment> fragStack, Stack<Character> operatorStack, CharBuffer chars) {
+
+        Fragment newFrag = fragStack.pop();
+        newFrag = Fragment.questionWrap(newFrag);
+
+        if (fragStack.size() != 0) {
+            if (canCat(chars.lookAhead(1))) {
+                Fragment pre = fragStack.pop();
+                newFrag = pre.cat(newFrag);
+            }
         }
-        Fragment newFragment = currentFrag.question(currentFrag);
-        return newFragment;
+
+        fragStack.push(newFrag);
     }
 
     private static Object convertMetaIfNeccessary(char c) {

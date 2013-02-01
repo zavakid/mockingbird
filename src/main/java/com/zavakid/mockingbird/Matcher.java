@@ -15,12 +15,11 @@
  */
 package com.zavakid.mockingbird;
 
-import java.util.Stack;
-
 import com.zavakid.mockingbird.automaton.Fragment;
 import com.zavakid.mockingbird.automaton.NFA;
 import com.zavakid.mockingbird.automaton.State;
 import com.zavakid.mockingbird.common.CharBuffer;
+import com.zavakid.mockingbird.common.Stack;
 
 /**
  * NOT Thread safe!

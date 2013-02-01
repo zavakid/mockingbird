@@ -43,6 +43,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit_version>4.11</junit_version>
     <guava_version>13.0.1</guava_version>
+    <benchmarks_version>0.4.0</benchmarks_version>
   </properties>
 
   <dependencies>
@@ -56,6 +57,12 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit_version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.carrotsearch</groupId>
+      <artifactId>junit-benchmarks</artifactId>
+      <version>${benchmarks_version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -39,8 +39,11 @@ public class Matcher {
         nfa.reset();
         for (char ch : str.toCharArray()) {
             nfa.moveStates(ch);
-            if (nfa.inAcceptState()) {
-                return true;
+            // for $ at end of pattern
+            if (!nfa.isStrictEnd()) {
+                if (nfa.inAcceptState()) {
+                    return true;
+                }
             }
         }
 
@@ -48,6 +51,10 @@ public class Matcher {
             return true;
         }
 
+        // for ^ at start of pattern, no more change to match again
+        if (nfa.isStrictStart()) {
+            return false;
+        }
         while (str.length() > 0) {
             str = str.substring(1);
             return match(str);
@@ -58,10 +65,21 @@ public class Matcher {
     }
 
     protected NFA compile(String pattern) {
+        nfa = new NFA();
+
+        if (pattern.startsWith("^")) {
+            pattern = pattern.substring(1);
+            nfa.setStrictStart(true);
+        }
+
+        if (pattern.endsWith("$")) {
+            pattern = pattern.substring(0, pattern.length() - 1);
+            nfa.setStrictEnd(true);
+        }
+
         CharBuffer chars = new CharBuffer(pattern);
         Fragment frag = parseFragment(chars);
 
-        nfa = new NFA();
         nfa.setStartState(frag.getStart());
         return nfa;
     }

@@ -28,6 +28,9 @@ import java.util.Set;
  */
 public class NFA {
 
+    private boolean           strictStart;
+    private boolean           strictEnd;
+
     private State             startState;
     private Collection<State> currentState = new HashSet<State>();
 
@@ -67,6 +70,22 @@ public class NFA {
 
     public void setStartState(State startState) {
         this.startState = startState;
+    }
+
+    public boolean isStrictStart() {
+        return strictStart;
+    }
+
+    public boolean isStrictEnd() {
+        return strictEnd;
+    }
+
+    public void setStrictStart(boolean strictStart) {
+        this.strictStart = strictStart;
+    }
+
+    public void setStrictEnd(boolean strictEnd) {
+        this.strictEnd = strictEnd;
     }
 
 }

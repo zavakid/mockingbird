@@ -65,6 +65,8 @@ public class MatcherTest {
                 new Object[] { "a\\|b", new String[] { "a|b" } }, new Object[] { "a\\*", new String[] { "a*" } },
                 new Object[] { "h(ello|appy) hippo", new String[] { "hello there, happy hippox" } },
                 new Object[] { "abc", new String[] { "abcd" } },
+                new Object[] { "^(xy)+(abc)+$", new String[] { "xyabc", "xyxyabcabc", } },
+                new Object[] { "^ab$", new String[] { "ab" } }, new Object[] { "^ab(ab)+$", new String[] { "abab" } },
 
         });
     }

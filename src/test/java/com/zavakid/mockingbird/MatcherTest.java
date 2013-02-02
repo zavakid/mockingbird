@@ -67,8 +67,12 @@ public class MatcherTest {
                 new Object[] { "abc", new String[] { "abcd" } },
                 new Object[] { "^(xy)+(abc)+$", new String[] { "xyabc", "xyxyabcabc", } },
                 new Object[] { "^ab$", new String[] { "ab" } }, new Object[] { "^ab(ab)+$", new String[] { "abab" } },
-
-        });
+                new Object[] { "x(.+)+x", new String[] { "==xxx==========================" } },
+                new Object[] { "to(nite|knite|night)", new String[] { "hot tonic tonight!" } },
+                new Object[] { "[abc]", new String[] { "a" } }, new Object[] { "x[abc]y", new String[] { "xby" } },
+                new Object[] { "x[abc]+y", new String[] { "xbcaaaabcccby", "xay" } },
+                new Object[] { "x[(abc)(h)(ij)]+y", new String[] { "xay" } },
+                new Object[] { "xy]xy", new String[] { "xy]xy" } }, });
     }
 
     private String   pattern;

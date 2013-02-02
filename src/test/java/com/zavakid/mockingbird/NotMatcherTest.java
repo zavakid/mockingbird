@@ -43,6 +43,8 @@ public class NotMatcherTest {
                 new Object[] { "(xy)+(abc)+", new String[] { "abc", "xy", } },
                 new Object[] { "(xy)+(abc)+", new String[] { "xabc", "xya", } },
                 new Object[] { "^ab$", new String[] { "abc", "cab" } },
+                new Object[] { "x[abc]y", new String[] { "xabcy", "xy" } },
+                new Object[] { "xabc]y", new String[] { "xay", "xby" } },
 
         });
     }
@@ -59,7 +61,7 @@ public class NotMatcherTest {
     public void test() {
         Matcher matcher = new Matcher(pattern);
         for (String testStr : testStrs) {
-            Assert.assertFalse(String.format("pattern [ %s ] is matche string [ %s ]", pattern, testStr),
+            Assert.assertFalse(String.format("pattern [  %s  ] is matche string [  %s  ]", pattern, testStr),
                                matcher.match(testStr));
         }
     }

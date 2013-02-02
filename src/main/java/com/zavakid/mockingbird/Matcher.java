@@ -66,6 +66,7 @@ public class Matcher {
 
     protected NFA compile(String pattern) {
         nfa = new NFA();
+        ParseContext context = new ParseContext();
 
         if (pattern.startsWith("^")) {
             pattern = pattern.substring(1);
@@ -78,58 +79,81 @@ public class Matcher {
         }
 
         CharBuffer chars = new CharBuffer(pattern);
-        Fragment frag = parseFragment(chars);
+        Fragment frag = parseFragment(chars, context);
 
         nfa.setStartState(frag.getStart());
         return nfa;
     }
 
-    protected Fragment parseFragment(CharBuffer chars) {
+    protected Fragment parseFragment(CharBuffer chars, ParseContext context) {
         Stack<Fragment> fragStack = new Stack<Fragment>();
         while (chars.remain()) {
             char c = chars.next();
             switch (c) {
                 default:
-                    buildDeafultFrag(fragStack, chars, c);
+                    buildDeafultFrag(fragStack, chars, c, context);
                     break;
                 case '.':
-                    buildDeafultFrag(fragStack, chars, State.ANY_CHARACTOR);
+                    buildDeafultFrag(fragStack, chars, State.ANY_CHARACTOR, context);
                     break;
                 case '*':
-                    buildStarFrag(fragStack, chars);
+                    buildStarFrag(fragStack, chars, context);
                     break;
                 case '+':
-                    buildPlusFrag(fragStack, chars);
+                    buildPlusFrag(fragStack, chars, context);
                     break;
                 case '?':
-                    buildQuestionFrag(fragStack, chars);
+                    buildQuestionFrag(fragStack, chars, context);
                     break;
                 case '\\':
-                    buildEscapeFrag(fragStack, chars);
+                    buildEscapeFrag(fragStack, chars, context);
                     break;
                 case '(':
-                    buildLeftBracketFrag(fragStack, chars);
+                    buildLeftBracketFrag(fragStack, chars, context);
                     break;
                 case ')':
-                    return join(fragStack);
+                    return merge(fragStack, context);
                 case '|':
-                    Fragment leftFrag = join(fragStack);
+                    Fragment leftFrag = merge(fragStack, context);
                     fragStack = new Stack<Fragment>();
-                    Fragment rightFrag = parseFragment(chars);
+                    Fragment rightFrag = parseFragment(chars, context);
                     return leftFrag.union(rightFrag);
+                case '[':
+                    buildLeftSquarreBracketFrag(fragStack, chars, context);
+                    break;
+                case ']':
+                    if (context.inLeftSquarreBracket()) {
+                        Fragment f = merge(fragStack, context);
+                        context.leaveLeftSquarreBracket();
+                        return f;
+                    } else {
+                        buildDeafultFrag(fragStack, chars, ']', context);
+                    }
+                    break;
+
             }
         }
-        return join(fragStack);
+
+        check(fragStack, context);
+        return merge(fragStack, context);
     }
 
-    private void buildDeafultFrag(Stack<Fragment> fragStack, CharBuffer chars, Object c) {
+    private void check(Stack<Fragment> fragStack, ParseContext context) {
+        if (context.inLeftSquarreBracket()) {
+            throw new IllegalArgumentException("the pattern has [ but no ]");
+        }
+
+    }
+
+    private void buildDeafultFrag(Stack<Fragment> fragStack, CharBuffer chars, Object c, ParseContext context) {
         Fragment newFrag = Fragment.create();
         newFrag.getStart().addTransfer(c, newFrag.getEnd());
-        catAndPush(fragStack, chars, newFrag);
+        mergeAndPush(fragStack, chars, newFrag, context);
 
     }
 
-    private boolean canCat(Character c) {
+    // if not quantifier, we can merge
+    private boolean canMerge(Character c) {
         if (c == null) {
             return true;
         }
@@ -144,52 +168,88 @@ public class Matcher {
         return true;
     }
 
-    private void buildStarFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+    private void buildStarFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
         Fragment newFrag = fragStack.pop();
         newFrag = Fragment.starWrap(newFrag);
-        catAndPush(fragStack, chars, newFrag);
+        mergeAndPush(fragStack, chars, newFrag, context);
     }
 
-    private void buildPlusFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+    private void buildPlusFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
         Fragment newFrag = fragStack.pop();
         newFrag = Fragment.plusWrap(newFrag);
-        catAndPush(fragStack, chars, newFrag);
+        mergeAndPush(fragStack, chars, newFrag, context);
     }
 
-    private void buildQuestionFrag(Stack<Fragment> fragStack, CharBuffer chars) {
+    private void buildQuestionFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
         Fragment newFrag = fragStack.pop();
         newFrag = Fragment.questionWrap(newFrag);
-        catAndPush(fragStack, chars, newFrag);
+        mergeAndPush(fragStack, chars, newFrag, context);
     }
 
-    private void buildEscapeFrag(Stack<Fragment> fragStack, CharBuffer chars) {
-        buildDeafultFrag(fragStack, chars, chars.next());
+    private void buildEscapeFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
+        buildDeafultFrag(fragStack, chars, chars.next(), context);
     }
 
-    private void buildLeftBracketFrag(Stack<Fragment> fragStack, CharBuffer chars) {
-        Fragment newFrag = parseFragment(chars);
-        catAndPush(fragStack, chars, newFrag);
+    private void buildLeftBracketFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
+        Fragment newFrag = parseFragment(chars, context);
+        mergeAndPush(fragStack, chars, newFrag, context);
     }
 
-    protected void catAndPush(Stack<Fragment> fragStack, CharBuffer chars, Fragment newFrag) {
+    private void buildLeftSquarreBracketFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
+        context.enterLeftSquarreBracket();
+        Fragment newFrag = parseFragment(chars, context);
+        mergeAndPush(fragStack, chars, newFrag, context);
+    }
+
+    protected void mergeAndPush(Stack<Fragment> fragStack, CharBuffer chars, Fragment newFrag, ParseContext context) {
         if (fragStack.size() != 0) {
-            if (canCat(chars.lookAhead(1))) {
+            if (canMerge(chars.lookAhead(1))) {
                 Fragment pre = fragStack.pop();
-                newFrag = pre.cat(newFrag);
+                if (context.canCat()) {
+                    newFrag = pre.cat(newFrag);
+                } else {
+                    newFrag = pre.union(newFrag);
+                }
+
             }
         }
         fragStack.push(newFrag);
     }
 
-    private Fragment join(Stack<Fragment> fragStack) {
+    private Fragment merge(Stack<Fragment> fragStack, ParseContext context) {
         Fragment start = fragStack.remove(0);
         if (fragStack.size() == 0) {
             return start;
         }
 
         for (Fragment fragment : fragStack) {
-            start = start.cat(fragment);
+            if (context.canCat()) {
+                start = start.cat(fragment);
+            } else {
+                start = start.union(fragment);
+            }
         }
         return start;
+    }
+
+    private static class ParseContext {
+
+        private int leftSquareBrackets = 0;
+
+        public void enterLeftSquarreBracket() {
+            leftSquareBrackets++;
+        }
+
+        public void leaveLeftSquarreBracket() {
+            leftSquareBrackets--;
+        }
+
+        public boolean inLeftSquarreBracket() {
+            return leftSquareBrackets > 0;
+        }
+
+        public boolean canCat() {
+            return leftSquareBrackets == 0;
+        }
     }
 }

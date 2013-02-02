@@ -52,7 +52,7 @@ public class MatcherTest {
                 new Object[] { "(xy)*(abc)?",
                         new String[] { "", "xy", "xyxy", "xyxyxy", "", "xyabc", "xyxyabc", "xyxyxyabc" } },
 
-                new Object[] { "a|b", new String[] { "a", "b" } },
+                new Object[] { "a|b", new String[] { "a", "b", "ac", "bc" } },
                 new Object[] { "ab|xy", new String[] { "ab", "xy" } },
                 new Object[] { "(ab|xy)zz", new String[] { "abzz", "xyzz" } },
                 new Object[] { "(ab?|xy)zz", new String[] { "azz", "abzz", "xyzz" } },
@@ -63,6 +63,8 @@ public class MatcherTest {
                 new Object[] { "((a|b)(x|y))?", new String[] { "", "ax", "bx", "ay", "by" } },
                 new Object[] { "((a|b)?(x|y))?", new String[] { "", "ax", "bx", "ay", "by", "x", "y" } },
                 new Object[] { "a\\|b", new String[] { "a|b" } }, new Object[] { "a\\*", new String[] { "a*" } },
+                new Object[] { "h(ello|appy) hippo", new String[] { "hello there, happy hippox" } },
+                new Object[] { "abc", new String[] { "abcd" } },
 
         });
     }

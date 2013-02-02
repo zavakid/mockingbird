@@ -33,16 +33,28 @@ public class Matcher {
 
     public Matcher(String pattern){
         nfa = compile(pattern);
-        // may be we can add cache for some hot pattern
-        // but caching need upper layer to do
     }
 
-    public boolean match(String string) {
+    public boolean match(String str) {
         nfa.reset();
-        for (char ch : string.toCharArray()) {
+        for (char ch : str.toCharArray()) {
             nfa.moveStates(ch);
+            if (nfa.inAcceptState()) {
+                return true;
+            }
         }
-        return nfa.inAcceptState();
+
+        if (nfa.inAcceptState()) {
+            return true;
+        }
+
+        while (str.length() > 0) {
+            str = str.substring(1);
+            return match(str);
+        }
+
+        return false;
+
     }
 
     protected NFA compile(String pattern) {

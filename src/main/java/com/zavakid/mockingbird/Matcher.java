@@ -114,6 +114,11 @@ public class Matcher {
                 case ')':
                     return merge(fragStack, context);
                 case '|':
+                    // in square bracket, | is a normal char
+                    if (context.inLeftSquareBracket()) {
+                        buildDeafultFrag(fragStack, chars, c, context);
+                        break;
+                    }
                     Fragment leftFrag = merge(fragStack, context);
                     fragStack = new Stack<Fragment>();
                     Fragment rightFrag = parseFragment(chars, context);
@@ -122,7 +127,7 @@ public class Matcher {
                     buildLeftSquarreBracketFrag(fragStack, chars, context);
                     break;
                 case ']':
-                    if (context.inLeftSquarreBracket()) {
+                    if (context.inLeftSquareBracket()) {
                         Fragment f = merge(fragStack, context);
                         context.leaveLeftSquarreBracket();
                         return f;
@@ -139,7 +144,7 @@ public class Matcher {
     }
 
     private void check(Stack<Fragment> fragStack, ParseContext context) {
-        if (context.inLeftSquarreBracket()) {
+        if (context.inLeftSquareBracket()) {
             throw new IllegalArgumentException("the pattern has [ but no ]");
         }
 
@@ -147,9 +152,33 @@ public class Matcher {
 
     private void buildDeafultFrag(Stack<Fragment> fragStack, CharBuffer chars, Object c, ParseContext context) {
         Fragment newFrag = Fragment.create();
-        newFrag.getStart().addTransfer(c, newFrag.getEnd());
+        if (needConnect(chars, context)) {
+            chars.next();
+            Character end = chars.next();
+            if (end.compareTo((Character) c) < 0) {
+                throw new IllegalArgumentException("invalid range " + c + "-" + end);
+            }
+            for (char i = (Character) c; i <= end; i++) {
+                newFrag.getStart().addTransfer(i, newFrag.getEnd());
+            }
+        } else {
+            newFrag.getStart().addTransfer(c, newFrag.getEnd());
+        }
         mergeAndPush(fragStack, chars, newFrag, context);
 
+    }
+
+    // match the strut like : [0-9]
+    private boolean needConnect(CharBuffer chars, ParseContext context) {
+        if (!context.inLeftSquareBracket()) {
+            return false;
+        }
+        Character next1 = chars.lookAhead(1);
+        Character next2 = chars.lookAhead(2);
+        if ((next1 != null && '-' == next1) && (next2 != null & ']' != next2)) {
+            return true;
+        }
+        return false;
     }
 
     // if not quantifier, we can merge
@@ -244,7 +273,7 @@ public class Matcher {
             leftSquareBrackets--;
         }
 
-        public boolean inLeftSquarreBracket() {
+        public boolean inLeftSquareBracket() {
             return leftSquareBrackets > 0;
         }
 

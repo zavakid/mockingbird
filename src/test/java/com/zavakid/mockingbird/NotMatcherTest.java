@@ -45,7 +45,6 @@ public class NotMatcherTest {
                 new Object[] { "^ab$", new String[] { "abc", "cab" } },
                 new Object[] { "x[abc]y", new String[] { "xabcy", "xy" } },
                 new Object[] { "xabc]y", new String[] { "xay", "xby" } },
-                new Object[] { "a[x0-9|y]", new String[] { "a1", "ax", "ay", "a9", "a0", "a|" } },
 
         });
     }

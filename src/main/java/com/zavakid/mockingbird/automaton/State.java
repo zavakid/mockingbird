@@ -20,37 +20,35 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-
 /**
  * @author Zava 2013-1-28 下午9:55:46
  * @since 0.0.1
  */
 public class State {
 
-    public static Object            EPSILON       = new Object() {
+    public static Object EPSILON       = new Object() {
 
-                                                      @Override
-                                                      public String toString() {
-                                                          return "epsilon";
-                                                      }
-                                                  };
+                                           @Override
+                                           public String toString() {
+                                               return "epsilon";
+                                           }
+                                       };
 
-    public static Object            ANY_CHARACTOR = new Object() {
+    public static Object ANY_CHARACTOR = new Object() {
 
-                                                      @Override
-                                                      public String toString() {
-                                                          return ".";
-                                                      }
-                                                  };
+                                           @Override
+                                           public String toString() {
+                                               return ".";
+                                           }
+                                       };
 
-    private static int              STATE_COUNT   = 0;
+    private static int   STATE_COUNT   = 0;
 
-    private int                     id;
-    private boolean                 inital;
-    private boolean                 accept;
-    private Multimap<Object, State> transfers     = HashMultimap.create();
+    private int          id;
+    private boolean      inital;
+    private boolean      accept;
+    // private Multimap<Object, State> transfers = HashMultimap.create();
+    private Transfer     transfers     = new Transfer();
 
     private State(){
         id = STATE_COUNT++;
@@ -140,14 +138,8 @@ public class State {
     public String toString() {
         StringBuilder sb = new StringBuilder("State [id=" + id + ", inital=" + inital + ", accept=" + accept
                                              + " Transfer : ");
-        for (Object key : transfers.keySet()) {
-            sb.append(System.getProperty("line.separator"));// TODO 需要封装此方式
-            sb.append(key).append(" -> ");
-            for (State state : transfers.get(key)) {
-                sb.append(state.id).append(" , ");
-            }
-            sb.append(System.getProperty("line.separator"));// TODO 需要封装此方式
-        }
+        // transfer to string
+        sb.append(transfers.toString());
         sb.append(" ]");
         return sb.toString();
     }

@@ -40,5 +40,5 @@ public class Transfer {
         innerMap.put(o, s);
     }
 
-    // TODO, need implement state
+    // TODO, need implement toString for human reader
 }

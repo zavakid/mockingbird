@@ -17,7 +17,7 @@ package com.zavakid.mockingbird;
 
 import com.zavakid.mockingbird.automaton.Fragment;
 import com.zavakid.mockingbird.automaton.NFA;
-import com.zavakid.mockingbird.automaton.State;
+import com.zavakid.mockingbird.automaton.Transfers;
 import com.zavakid.mockingbird.common.CharBuffer;
 import com.zavakid.mockingbird.common.Stack;
 
@@ -94,7 +94,7 @@ public class Matcher {
                     buildDeafultFrag(fragStack, chars, c, context);
                     break;
                 case '.':
-                    buildDeafultFrag(fragStack, chars, State.ANY_CHARACTOR, context);
+                    buildDeafultFrag(fragStack, chars, Transfers.ANY_CHARACTOR, context);
                     break;
                 case '*':
                     buildStarFrag(fragStack, chars, context);
@@ -143,6 +143,43 @@ public class Matcher {
         return merge(fragStack, context);
     }
 
+    // in negate mode, only \ and ] need to be consider as meta char
+    protected Fragment parseNegateFragment(CharBuffer chars, ParseContext context) {
+        Fragment newFrag = Fragment.create();
+        while (chars.remain()) {
+            char c = chars.next();
+            switch (c) {
+            // escape
+                case '\\':
+                    c = chars.next();
+                    newFrag.getStart().addNegateTransfer(c, newFrag.getEnd());
+                    break;
+                case ']':
+                    context.leaveLeftSquarreBracket();
+                    return newFrag;
+                default:
+                    addDefaultNegate(newFrag, chars, context, c);
+            }
+        }
+
+        throw new IllegalStateException("no ] after [");
+    }
+
+    private void addDefaultNegate(Fragment newFrag, CharBuffer chars, ParseContext context, Object c) {
+        if (needConnect(chars, context)) {
+            chars.next(); // remove '-'
+            Character end = chars.next();
+            if (end.compareTo((Character) c) < 0) {
+                throw new IllegalArgumentException("invalid range " + c + "-" + end);
+            }
+            for (char i = (Character) c; i <= end; i++) {
+                newFrag.getStart().addNegateTransfer(i, newFrag.getEnd());
+            }
+        } else {
+            newFrag.getStart().addNegateTransfer(c, newFrag.getEnd());
+        }
+    }
+
     private void check(Stack<Fragment> fragStack, ParseContext context) {
         if (context.inLeftSquareBracket()) {
             throw new IllegalArgumentException("the pattern has [ but no ]");
@@ -153,7 +190,7 @@ public class Matcher {
     private void buildDeafultFrag(Stack<Fragment> fragStack, CharBuffer chars, Object c, ParseContext context) {
         Fragment newFrag = Fragment.create();
         if (needConnect(chars, context)) {
-            chars.next();
+            chars.next(); // remove '-'
             Character end = chars.next();
             if (end.compareTo((Character) c) < 0) {
                 throw new IllegalArgumentException("invalid range " + c + "-" + end);
@@ -226,7 +263,18 @@ public class Matcher {
 
     private void buildLeftSquarreBracketFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
         context.enterLeftSquarreBracket();
-        Fragment newFrag = parseFragment(chars, context);
+
+        Fragment newFrag = null;
+
+        Character nc = chars.lookAhead(1);
+        if (nc != null && nc == '^') {
+            context.setNegateMode(true);
+            chars.next();
+            newFrag = parseNegateFragment(chars, context);
+            context.setNegateMode(false);
+        } else {
+            newFrag = parseFragment(chars, context);
+        }
         mergeAndPush(fragStack, chars, newFrag, context);
     }
 
@@ -263,7 +311,8 @@ public class Matcher {
 
     private static class ParseContext {
 
-        private int leftSquareBrackets = 0;
+        private int     leftSquareBrackets = 0;
+        private boolean negateMode         = false;
 
         public void enterLeftSquarreBracket() {
             leftSquareBrackets++;
@@ -280,5 +329,14 @@ public class Matcher {
         public boolean canCat() {
             return leftSquareBrackets == 0;
         }
+
+        public boolean isNegateMode() {
+            return negateMode;
+        }
+
+        public void setNegateMode(boolean negateMode) {
+            this.negateMode = negateMode;
+        }
+
     }
 }

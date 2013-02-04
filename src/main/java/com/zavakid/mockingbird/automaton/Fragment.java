@@ -42,7 +42,7 @@ public class Fragment {
     }
 
     public Fragment cat(Fragment another) {
-        this.end.addTransfer(State.EPSILON, another.start);
+        this.end.addTransfer(Transfers.EPSILON, another.start);
         this.end.canalAccept();
         this.end = another.end;
         another.start.canalInital();
@@ -57,16 +57,16 @@ public class Fragment {
      */
     public Fragment union(Fragment another) {
         Fragment newFragment = create();
-        newFragment.start.addTransfer(State.EPSILON, this.start);
+        newFragment.start.addTransfer(Transfers.EPSILON, this.start);
         this.start.canalInital();
 
-        this.end.addTransfer(State.EPSILON, newFragment.end);
+        this.end.addTransfer(Transfers.EPSILON, newFragment.end);
         this.end.canalAccept();
 
-        newFragment.start.addTransfer(State.EPSILON, another.start);
+        newFragment.start.addTransfer(Transfers.EPSILON, another.start);
         another.start.canalInital();
 
-        another.end.addTransfer(State.EPSILON, newFragment.end);
+        another.end.addTransfer(Transfers.EPSILON, newFragment.end);
         another.end.canalAccept();
 
         return newFragment;
@@ -80,13 +80,13 @@ public class Fragment {
      */
     public static Fragment questionWrap(Fragment another) {
         Fragment newFragment = create();
-        newFragment.start.addTransfer(State.EPSILON, another.start);
+        newFragment.start.addTransfer(Transfers.EPSILON, another.start);
         another.start.canalInital();
 
-        another.end.addTransfer(State.EPSILON, newFragment.end);
+        another.end.addTransfer(Transfers.EPSILON, newFragment.end);
         another.end.canalAccept();
 
-        newFragment.start.addTransfer(State.EPSILON, newFragment.end);
+        newFragment.start.addTransfer(Transfers.EPSILON, newFragment.end);
 
         return newFragment;
     }
@@ -99,13 +99,13 @@ public class Fragment {
      */
     public static Fragment starWrap(Fragment another) {
         Fragment newFragment = create();
-        newFragment.start.addTransfer(State.EPSILON, another.start);
+        newFragment.start.addTransfer(Transfers.EPSILON, another.start);
         another.start.canalInital();
 
-        another.end.addTransfer(State.EPSILON, newFragment.start);
+        another.end.addTransfer(Transfers.EPSILON, newFragment.start);
         another.end.canalAccept();
 
-        newFragment.start.addTransfer(State.EPSILON, newFragment.end);
+        newFragment.start.addTransfer(Transfers.EPSILON, newFragment.end);
 
         return newFragment;
     }
@@ -118,11 +118,11 @@ public class Fragment {
      */
     public static Fragment plusWrap(Fragment another) {
         Fragment newFragment = create();
-        newFragment.start.addTransfer(State.EPSILON, another.start);
+        newFragment.start.addTransfer(Transfers.EPSILON, another.start);
         another.start.canalInital();
 
-        another.end.addTransfer(State.EPSILON, newFragment.end);
-        another.end.addTransfer(State.EPSILON, newFragment.start);
+        another.end.addTransfer(Transfers.EPSILON, newFragment.end);
+        another.end.addTransfer(Transfers.EPSILON, newFragment.start);
         another.end.canalAccept();
 
         return newFragment;

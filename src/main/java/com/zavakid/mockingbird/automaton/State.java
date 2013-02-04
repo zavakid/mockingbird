@@ -26,29 +26,13 @@ import java.util.Set;
  */
 public class State {
 
-    public static Object EPSILON       = new Object() {
+    private static int STATE_COUNT = 0;
 
-                                           @Override
-                                           public String toString() {
-                                               return "epsilon";
-                                           }
-                                       };
-
-    public static Object ANY_CHARACTOR = new Object() {
-
-                                           @Override
-                                           public String toString() {
-                                               return ".";
-                                           }
-                                       };
-
-    private static int   STATE_COUNT   = 0;
-
-    private int          id;
-    private boolean      inital;
-    private boolean      accept;
+    private int        id;
+    private boolean    inital;
+    private boolean    accept;
     // private Multimap<Object, State> transfers = HashMultimap.create();
-    private Transfer     transfers     = new Transfer();
+    private Transfers  transfers   = new Transfers();
 
     private State(){
         id = STATE_COUNT++;
@@ -97,7 +81,7 @@ public class State {
     }
 
     protected void collectClosure(Set<State> collected) {
-        Collection<State> epsilonState = transfers.get(EPSILON);
+        Collection<State> epsilonState = transfers.get(Transfers.EPSILON);
         for (State state : epsilonState) {
             if (!collected.contains(state)) {
                 collected.add(state);
@@ -108,6 +92,14 @@ public class State {
 
     public void addTransfer(Object o, State s) {
         transfers.put(o, s);
+    }
+
+    public void addNegateTransfer(State s, Object... objects) {
+        transfers.putNegate(s, objects);
+    }
+
+    public void addNegateTransfer(Object o, State s) {
+        transfers.putNegate(s, o);
     }
 
     public boolean isInital() {

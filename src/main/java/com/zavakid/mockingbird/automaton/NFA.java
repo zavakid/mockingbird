@@ -42,7 +42,7 @@ public class NFA {
         Set<State> nextState = new HashSet<State>();
         for (State state : currentState) {
             Collection<State> nextAndClosure = state.getNextAndTheirClosure(ch);
-            Collection<State> anyAndClosure = state.getNextAndTheirClosure(State.ANY_CHARACTOR);
+            Collection<State> anyAndClosure = state.getNextAndTheirClosure(Transfers.ANY_CHARACTOR);
             nextState.addAll(nextAndClosure);
             nextState.addAll(anyAndClosure);
         }

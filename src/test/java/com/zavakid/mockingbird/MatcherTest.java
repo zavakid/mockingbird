@@ -76,7 +76,9 @@ public class MatcherTest {
                 new Object[] { "a[x0-9y]", new String[] { "a1", "ax", "ay", "a9", "a0" } },
                 new Object[] { "a[x0-9|y]", new String[] { "a1", "ax", "ay", "a9", "a0", "a|" } },
                 new Object[] { "a[^0-9]z", new String[] { "aaz", "a$z" } },
-                new Object[] { "a[^0-9a-z]z", new String[] { "aAz", "aZz" } }, });
+                new Object[] { "a[^0-9a-z]z", new String[] { "aAz", "aZz" } },
+                new Object[] { "a[^\\d]z", new String[] { "aAz", "aZz", "a\\z", "adz" } },
+                new Object[] { "a\\dz", new String[] { "a1z", "a0z" } }, });
     }
 
     private String   pattern;

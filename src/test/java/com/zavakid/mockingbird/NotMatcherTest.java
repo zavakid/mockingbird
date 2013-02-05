@@ -51,6 +51,8 @@ public class NotMatcherTest {
                 new Object[] { "xabc]y", new String[] { "xay", "xby" } },
                 new Object[] { "a[^0-9]z", new String[] { "a1z", "a0z", "z5z", "a9z" } },
                 new Object[] { "a[^0-9a-z]z", new String[] { "a1z", "a0z", "z5z", "a9z", "aaz", "abz", "axz", "ahz" } },
+                new Object[] { "a\\dz", new String[] { "aaz", "abz" } },
+                new Object[] { "a[^\\d]z", new String[] { "a1z", "a2z" } },
 
         });
     }

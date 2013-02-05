@@ -106,7 +106,7 @@ public class Matcher {
                     buildQuestionFrag(fragStack, chars, context);
                     break;
                 case '\\':
-                    buildEscapeFrag(fragStack, chars, context);
+                    buildEscapeOrRangeFrag(fragStack, chars, context);
                     break;
                 case '(':
                     buildLeftBracketFrag(fragStack, chars, context);
@@ -152,7 +152,7 @@ public class Matcher {
             // escape
                 case '\\':
                     c = chars.next();
-                    newFrag.getStart().addNegateTransfer(c, newFrag.getEnd());
+                    buildNegateEscapeOrRangeFrag(newFrag, c);
                     break;
                 case ']':
                     context.leaveLeftSquarreBracket();
@@ -165,6 +165,18 @@ public class Matcher {
         throw new IllegalStateException("no ] after [");
     }
 
+    protected void buildNegateEscapeOrRangeFrag(Fragment newFrag, char c) {
+        switch (c) {
+            case 'd':
+                buildNegateRangeFrag('0', '9', newFrag);
+                break;
+
+            default:
+                newFrag.getStart().addNegateTransfer(c, newFrag.getEnd());
+                break;
+        }
+    }
+
     private void addDefaultNegate(Fragment newFrag, CharBuffer chars, ParseContext context, Object c) {
         if (needConnect(chars, context)) {
             chars.next(); // remove '-'
@@ -173,7 +185,7 @@ public class Matcher {
                 throw new IllegalArgumentException("invalid range " + c + "-" + end);
             }
             for (char i = (Character) c; i <= end; i++) {
-                newFrag.getStart().addNegateTransfer(i, newFrag.getEnd());
+                buildNegateEscapeOrRangeFrag(newFrag, i);
             }
         } else {
             newFrag.getStart().addNegateTransfer(c, newFrag.getEnd());
@@ -192,17 +204,30 @@ public class Matcher {
         if (needConnect(chars, context)) {
             chars.next(); // remove '-'
             Character end = chars.next();
-            if (end.compareTo((Character) c) < 0) {
-                throw new IllegalArgumentException("invalid range " + c + "-" + end);
-            }
-            for (char i = (Character) c; i <= end; i++) {
-                newFrag.getStart().addTransfer(i, newFrag.getEnd());
-            }
+            buildRangeFrag((Character) c, end, newFrag);
         } else {
             newFrag.getStart().addTransfer(c, newFrag.getEnd());
         }
         mergeAndPush(fragStack, chars, newFrag, context);
 
+    }
+
+    protected void buildRangeFrag(Character start, Character end, Fragment newFrag) {
+        if (end.compareTo((Character) start) < 0) {
+            throw new IllegalArgumentException("invalid range " + start + "-" + end);
+        }
+        for (char i = (Character) start; i <= end; i++) {
+            newFrag.getStart().addTransfer(i, newFrag.getEnd());
+        }
+    }
+
+    protected void buildNegateRangeFrag(Character start, Character end, Fragment newFrag) {
+        if (end.compareTo((Character) start) < 0) {
+            throw new IllegalArgumentException("invalid range " + start + "-" + end);
+        }
+        for (char i = (Character) start; i <= end; i++) {
+            newFrag.getStart().addNegateTransfer(i, newFrag.getEnd());
+        }
     }
 
     // match the strut like : [0-9]
@@ -252,8 +277,18 @@ public class Matcher {
         mergeAndPush(fragStack, chars, newFrag, context);
     }
 
-    private void buildEscapeFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
-        buildDeafultFrag(fragStack, chars, chars.next(), context);
+    private void buildEscapeOrRangeFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
+        char c = chars.next();
+        Fragment newFrag = Fragment.create();
+        switch (c) {
+            case 'd': // 0-9
+                buildRangeFrag('0', '9', newFrag);
+                mergeAndPush(fragStack, chars, newFrag, context);
+                break;
+            default:
+                buildDeafultFrag(fragStack, chars, c, context);
+                break;
+        }
     }
 
     private void buildLeftBracketFrag(Stack<Fragment> fragStack, CharBuffer chars, ParseContext context) {
